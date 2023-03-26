@@ -210,6 +210,38 @@ def shaanxi(location):
                     except Exception as e:
                         print(e)
 
+def hainan(location):
+    # 首先获取总共的页面数
+    url_page = r'https://www.ccgp-hainan.gov.cn/cgw/cgw_list_cgxx.jsp?currentPage=1'
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+    }
+    resp_page = requests.get(url_page,headers=headers)
+    soup_page = BeautifulSoup(resp_page.text,'html.parser')
+    page_sum = (soup_page.select('body > div.cg20-zt > div.cg20-gl > div > div.nei02_04_02 > form > ul > li > a:nth-child(2)')[0].get('href')).split('=')[-1]
+
+    for page in range(1,int(page_sum)):
+        url = f'https://www.ccgp-hainan.gov.cn/cgw/cgw_list_cgxx.jsp?currentPage={page}'
+        resp = requests.get(url,headers=headers)
+        soup = BeautifulSoup(resp.text,'html.parser')
+        for row in soup.select('.nei03_04_08>ul>li'):
+            type = row.select('span>tt>a')[0].text  # 采购类型
+            sourcing_places = row.select('span>b>a')[0].text# 采购地方
+            title = row.select('em>a')[0].text  #采购标题
+            title_href = 'https://www.ccgp-hainan.gov.cn' +row.select('em>a')[0].get('href')  #采购详情链接
+            company = row.select('h5>a')[0].text # 采购公司
+            print(company,title_href)
+
+            resp_title = requests.get(title_href,headers=headers)
+            try:
+                soup_title = BeautifulSoup(resp_title.text,'html.parser')
+                for file in soup_title.select('.content03'):
+                    file_href = file.select('a')[1].get('href')
+                    file_href_name = file_href.split('/')[0].split('.')[0]
+                    file_format = file_href.split('.')[-1]
+                    print(file_href,file_href_name)
+            except:
+                pass
 
 if __name__ == '__main__':
 
@@ -222,3 +254,5 @@ if __name__ == '__main__':
         henan(location)
     elif location == '陕西':
         shaanxi(location)
+    elif location == '海南':
+        hainan(location)
