@@ -230,23 +230,80 @@ def hainan(location):
             title = row.select('em>a')[0].text  #采购标题
             title_href = 'https://www.ccgp-hainan.gov.cn' +row.select('em>a')[0].get('href')  #采购详情链接
             company = row.select('h5>a')[0].text # 采购公司
-            print(company,title_href)
+            # print(company,title_href)
 
             resp_title = requests.get(title_href,headers=headers)
             try:
                 soup_title = BeautifulSoup(resp_title.text,'html.parser')
-                for file in soup_title.select('.content03'):
-                    file_href = file.select('a')[1].get('href')
-                    file_href_name = file_href.split('/')[0].split('.')[0]
-                    file_format = file_href.split('.')[-1]
-                    print(file_href,file_href_name)
+                # body > div.cg20-zt > div.cg20-gl > div > div.content01 > div:nth-child(16) > table > tbody > tr
+                for file in soup_title.select('body > div.cg20-zt > div.cg20-gl > div > div.content01 > div:nth-child(16) > table > tbody > tr>td'):
+                    try:
+                        file_href = file.select('a')[0].get('href')
+                        file_href_name = file_href.split('/')[0].split('.')[0]
+                        file_format = file_href.split('.')[-1]
+                        print(file_href,file_href_name)
+                    except:pass
             except:
                 pass
+
+def tianjin_soup(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    for raw in soup.select('#pageContent>#reflshPage>#reflshPage>ul>li'):
+        title_href = 'http://www.ccgp-tianjin.gov.cn' + raw.select('a')[0].get('href')  # 项目链接
+        title = raw.select('a')[0].text  # 项目标题
+        time = raw.select('span')[0].text  # 项目发布时间
+        print(title, title_href, time)
+def tianjin(location):
+    header = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+    }
+    # 获取总页数
+    url_page = f'http://www.ccgp-tianjin.gov.cn/portal/topicView.do?method=view&view=Infor&id=2015&ver=2&st=1&stmp=1680413770856'
+    resp_page = requests.get(url_page,headers=header)
+    soup_page = BeautifulSoup(resp_page.text, 'html.parser')
+    page_sum = soup_page.select('#pagesColumn > div > span.countPage > b')[0].text
+
+    # chrome_options = webdriver.ChromeOptions()
+    # chrome_options.add_argument('--headless')
+    # chrome_options.add_argument("--window-size=1920, 1080")
+    #
+    # chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
+    # chrome_options.add_experimental_option('useAutomationExtension', False)
+    # chrome_options.add_argument("disable-infobars")
+    #
+    # # chrome_options.add_argument()
+    # chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    # # 禁止加载
+    # prefs = {
+    #     'profile.default_content_setting_values': {
+    #         'images': 2,
+    #         # 'javascript': 2,
+    #         'permissions.default.stylesheet': 2
+    #     }
+    # }
+    # chrome_options.add_experimental_option('prefs', prefs)
+    # driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=chrome_options)
+
+    driver = webdriver.Chrome(r"D:\Egg_Project\chromedriver.exe")
+    driver.get(url_page)
+    for i in range(1,int(page_sum)):
+        driver.implicitly_wait(5)
+        driver.find_element_by_css_selector('#goNum').click()
+        driver.find_element_by_css_selector('#goNum').send_keys(i)
+        driver.find_element_by_css_selector('#pagesColumn > div > span.countPage > span > a').click()
+
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        for raw in soup.select('#pageContent>#reflshPage>#reflshPage>ul>li'):
+            title_href = 'http://www.ccgp-tianjin.gov.cn' + raw.select('a')[0].get('href')  # 项目链接
+            title = raw.select('a')[0].text  # 项目标题
+            time = raw.select('span')[0].text  # 项目发布时间
+            print(title, title_href, time)
+
 
 if __name__ == '__main__':
 
     location = input('请输入采集的地方：')
-    if location == '贵州':
+    if location == '贵州':  #需要调整
         guizhou(location)
     elif location == '浙江':
         zhejiang(location)
@@ -254,5 +311,7 @@ if __name__ == '__main__':
         henan(location)
     elif location == '陕西':
         shaanxi(location)
-    elif location == '海南':
+    elif location == '海南':  #未进行测试
         hainan(location)
+    elif location == '天津':
+        tianjin(location)
